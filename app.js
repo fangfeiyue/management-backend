@@ -4,8 +4,10 @@ const views = require('koa-views')
 const json = require('koa-json')
 const onerror = require('koa-onerror')
 const bodyparser = require('koa-bodyparser')
-
+// 这个只能输出一些比较简单的日志，不适合输出复杂日志
 const logger = require('koa-logger')
+
+const log4js = require('./utils/log')
 
 const index = require('./routes/index')
 const users = require('./routes/users')
@@ -27,10 +29,19 @@ app.use(views(__dirname + '/views', {
 
 // logger
 app.use(async (ctx, next) => {
-  const start = new Date()
+
   await next()
-  const ms = new Date() - start
-  console.log(`${ctx.method} ${ctx.url} - ${ms}ms`)
+
+  log4js.info(ctx.method);
+
+  // 人为制造一个报错
+  // console.log(dddd);
+  
+
+  // const start = new Date()
+  // await next()
+  // const ms = new Date() - start
+  // console.log(`${ctx.method} ${ctx.url} - ${ms}ms`)
 })
 
 // routes
@@ -39,7 +50,7 @@ app.use(users.routes(), users.allowedMethods())
 
 // error-handling
 app.on('error', (err, ctx) => {
-  console.error('server error', err, ctx)
+  log4js.error(err.stack);
 });
 
 module.exports = app

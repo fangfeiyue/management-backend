@@ -1,0 +1,10 @@
+[2021-09-06T19:55:29.995] [ERROR] error - 数据库连接失败
+[2021-09-06T19:56:06.305] [ERROR] error - 数据库连接失败
+[2021-09-06T23:29:56.303] [ERROR] error - ReferenceError: BUSINESS_ERROR is not defined
+    at Object.fail (/Users/sun/Desktop/learn/node/koa/manager-server/utils/utils.js:28:21)
+    at /Users/sun/Desktop/learn/node/koa/manager-server/routes/users.js:19:19
+    at processTicksAndRejections (internal/process/task_queues.js:97:5)
+    at async /Users/sun/Desktop/learn/node/koa/manager-server/app.js:33:3
+    at async serve (/Users/sun/Desktop/learn/node/koa/manager-server/node_modules/koa-static/index.js:53:9)
+    at async logger (/Users/sun/Desktop/learn/node/koa/manager-server/node_modules/koa-logger/index.js:67:7)
+    at async bodyParser (/Users/sun/Desktop/learn/node/koa/manager-server/node_modules/koa-bodyparser/index.js:95:5)

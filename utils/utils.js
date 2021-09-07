@@ -25,7 +25,7 @@ module.exports = {
       code, data, msg
     };
   },
-  fail(msg='', code=BUSINESS_ERROR) {
+  fail(msg='', code=CODE.BUSINESS_ERROR) {
     return {
       msg, code
     }

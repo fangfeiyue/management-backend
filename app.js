@@ -9,8 +9,9 @@ const logger = require('koa-logger')
 
 const log4js = require('./utils/log')
 
-const index = require('./routes/index')
+require('./config/db');
 const users = require('./routes/users')
+const router = require('koa-router')()
 
 // error handler
 onerror(app)
@@ -30,9 +31,11 @@ app.use(views(__dirname + '/views', {
 // logger
 app.use(async (ctx, next) => {
 
-  await next()
+  log4js.info('get parmas', ctx.request.query);
+  log4js.info('post params', ctx.request.body);
+  await next();
 
-  log4js.info(ctx.method);
+  // log4js.info(ctx.method);
 
   // 人为制造一个报错
   // console.log(dddd);
@@ -44,9 +47,11 @@ app.use(async (ctx, next) => {
   // console.log(`${ctx.method} ${ctx.url} - ${ms}ms`)
 })
 
+router.prefix('/api');
 // routes
-app.use(index.routes(), index.allowedMethods())
-app.use(users.routes(), users.allowedMethods())
+router.use(users.routes(), users.allowedMethods());
+app.use(router.routes(), router.allowedMethods());
+// app.use(users.routes(), users.allowedMethods())
 
 // error-handling
 app.on('error', (err, ctx) => {

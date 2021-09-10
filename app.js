@@ -12,6 +12,7 @@ const log4js = require('./utils/log')
 require('./config/db');
 const users = require('./routes/users')
 const router = require('koa-router')()
+var jwt = require('jsonwebtoken');
 
 // error handler
 onerror(app)
@@ -48,6 +49,12 @@ app.use(async (ctx, next) => {
 })
 
 router.prefix('/api');
+router.get('/leave/count', async ctx => {
+  const token = ctx.request.headers.authorization.split(' ')[1];
+  const payload = jwt.verify(token, 'fang');
+  ctx.body = payload;
+});
+
 // routes
 router.use(users.routes(), users.allowedMethods());
 app.use(router.routes(), router.allowedMethods());

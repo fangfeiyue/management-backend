@@ -13,6 +13,10 @@ require('./config/db');
 const users = require('./routes/users')
 const router = require('koa-router')()
 var jwt = require('jsonwebtoken');
+const koaJWT = require('koa-jwt');
+
+const utils = require('./utils/utils')
+// app.use(koaJWT({ secret: 'fang' }));
 
 // error handler
 onerror(app)
@@ -30,23 +34,21 @@ app.use(views(__dirname + '/views', {
 }))
 
 // logger
-app.use(async (ctx, next) => {
-
-  log4js.info('get parmas', ctx.request.query);
-  log4js.info('post params', ctx.request.body);
-  await next();
-
-  // log4js.info(ctx.method);
-
-  // 人为制造一个报错
-  // console.log(dddd);
-  
-
-  // const start = new Date()
-  // await next()
-  // const ms = new Date() - start
-  // console.log(`${ctx.method} ${ctx.url} - ${ms}ms`)
+app.use(async function(ctx, next) {
+  await next().catch((err) => {
+    if (err.status == 401) {
+      ctx.staus = 200;
+      ctx.body = utils.fail('token 验证失败', utils.CODE.AUTH_ERROR);
+    }else {
+      throw err;
+    }
+  });
 })
+
+// unless 排除一些不需要校验的接口
+app.use(koaJWT({ secret: 'fang' }).unless({
+  path: [/^\/api\/users\/login/]
+}));
 
 router.prefix('/api');
 router.get('/leave/count', async ctx => {
@@ -62,7 +64,7 @@ app.use(router.routes(), router.allowedMethods());
 
 // error-handling
 app.on('error', (err, ctx) => {
-  log4js.error(err.stack);
+  // log4js.error(err.stack);
 });
 
 module.exports = app

@@ -20,14 +20,15 @@ module.exports = {
       skipIndex
     };
   },
-  success(data, msg, code=CODE.SUCCESS) {
+  success(data, msg, code = CODE.SUCCESS) {
     return {
       code, data, msg
     };
   },
-  fail(msg='', code=CODE.BUSINESS_ERROR) {
+  fail(msg='', code = CODE.BUSINESS_ERROR) {
     return {
       msg, code
     }
-  }
+  },
+  CODE
 };

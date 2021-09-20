@@ -72,4 +72,32 @@ router.get('/list', async (ctx) => {
 	}
 });
 
+// 这里的删除指代的是软删除，实际是更新，以防后续数据有用
+router.post('/delete', async (ctx) => {
+	const { userIds } = ctx.request.body;
+	try {
+		// 删除指定条目
+		// const res = await User.updateMany({ userId: 10002 }, { state: 2 });
+
+		// 通过 或 删除多条
+		// const res = await User.updateMany({ $or: [ { userId: 10002 }, { userId: 100002 } ] }, { state: 2 });
+
+		// 通过 与 删除多条
+		const res = await User.updateMany({ userId: { $in: userIds } }, { state: 2 });
+		console.log(res);
+		if (res.modifiedCount) {
+			ctx.body = utils.success(
+				{
+					nModified: res.modifiedCount
+				},
+				`共删除${res.modifiedCount}条数据`
+			);
+			return;
+		}
+		ctx.body = utils.fail('删除失败');
+	} catch (err) {
+		ctx.body = utils.fail(`删除异常 ~ ${err.stack}`);
+	}
+});
+
 module.exports = router;

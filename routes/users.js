@@ -100,4 +100,31 @@ router.post('/delete', async (ctx) => {
 	}
 });
 
+router.post('/operate', async (ctx) => {
+	try {
+		const { userId, userName, userEmail, mobile, job, action, state, roleList, deptId } = ctx.request.body;
+
+		if (action == 'add' && (!userName || !userEmail || deptId)) {
+			ctx.body = utils.fail('参数错误', utils.CODE.PARAM_ERROR);
+			return;
+		}
+
+		if (!deptId) {
+			ctx.body = utils.fail('部门不能为空', utils.CODE.PARAM_ERROR);
+			return;
+		}
+
+		const res = await User.findOneAndUpdate({ userId }, { mobile, job, state, roleList, deptId });
+
+		if (res) {
+			ctx.body = utils.success({}, '更新成功');
+			return;
+		}
+
+		ctx.body = utils.fail('更新失败，没有找到对应的用户');
+	} catch (err) {
+		ctx.body = utils.fail(`编辑失败 ~ ${err.stack}`);
+	}
+});
+
 module.exports = router;

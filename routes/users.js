@@ -1,8 +1,10 @@
 const router = require('koa-router')();
 const User = require('./../models/userSchema');
+const Counter = require('./../models/couterSchema');
 const Util = require('../utils/utils');
 var jwt = require('jsonwebtoken');
 const utils = require('../utils/utils');
+const md5 = require('md5');
 router.prefix('/users');
 
 router.post('/login', async (ctx) => {
@@ -104,8 +106,67 @@ router.post('/operate', async (ctx) => {
 	try {
 		const { userId, userName, userEmail, mobile, job, action, state, roleList, deptId } = ctx.request.body;
 
-		if (action == 'add' && (!userName || !userEmail || deptId)) {
+		if (action == 'add' && (!userName || !userEmail || !deptId)) {
 			ctx.body = utils.fail('参数错误', utils.CODE.PARAM_ERROR);
+			return;
+		}
+
+		if (action == 'add') {
+			const doc = await Counter.findOneAndUpdate(
+				{ _id: 'userId' },
+				{
+					$inc: { sequence_value: 1 }
+				},
+				// 设置为 true 表示返回一个新的文档
+				{ new: true }
+			);
+
+			const res = await User.findOne({ $or: [ { userName }, { userEmail } ] }, '_id userName userEmail');
+
+			if (res) {
+				let tip = '';
+				if (res.userName === userName) {
+					tip = '用户名已存在，请修改用户名';
+				} else if (res.userEmail === userEmail) {
+					tip = '邮箱已经被使用，请修改邮箱';
+				}
+				ctx.body = utils.fail(tip);
+				return;
+			}
+
+			// 新增用户方法一
+			const user = await User.create({
+				userId: doc.sequence_value,
+				job,
+				state,
+				deptId,
+				mobile,
+				role: 1,
+				userName,
+				roleList,
+				userEmail,
+				// 这里暂时写死
+				userPwd: md5('123456')
+			});
+
+			// 新增用户方法二
+			// const user = new User({
+			// 	userId: doc.sequence_value,
+			// 	job,
+			// 	state,
+			// 	deptId,
+			// 	mobile,
+			// 	role: 1,
+			// 	userName,
+			// 	roleList,
+			// 	userEmail,
+			// 	// 这里暂时写死
+			// 	userPwd: md5('123456')
+			// });
+
+			// user.save();
+
+			ctx.body = utils.success(user, '用户创建成功');
 			return;
 		}
 

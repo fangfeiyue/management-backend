@@ -11,6 +11,7 @@ const log4js = require('./utils/log');
 
 require('./config/db');
 const users = require('./routes/users');
+const menus = require('./routes/menus');
 const router = require('koa-router')();
 var jwt = require('jsonwebtoken');
 const koaJWT = require('koa-jwt');
@@ -65,6 +66,7 @@ router.get('/leave/count', async (ctx) => {
 
 // routes
 router.use(users.routes(), users.allowedMethods());
+router.use(menus.routes(), menus.allowedMethods());
 app.use(router.routes(), router.allowedMethods());
 // app.use(users.routes(), users.allowedMethods())
 

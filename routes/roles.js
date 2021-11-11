@@ -55,12 +55,23 @@ router.post('/operate', async (ctx) => {
 		if (!_id) {
 			ctx.body = utils.fail('缺少参数：_id');
 		} else if (action === 'edit') {
-			await Role.findByIdAndUpdate(_id, { roleName, remark });
+			await Role.findByIdAndUpdate(_id, { roleName, remark, updateTime: new Date() });
 		} else if (action === 'delete') {
 			await Role.findByIdAndRemove(_id);
 		}
 		ctx.body = utils.success(info[action]);
 	} catch (err) {
+		ctx.body = utils.fail(err.stack);
+	}
+});
+
+router.post('/update/permission', async (ctx) => {
+	const { _id, permissionList } = ctx.request.body;
+	try {
+		const res = await Role.findByIdAndUpdate(_id, { permissionList, updateTime: new Date() });
+		ctx.body = utils.success('', '权限更新成功');
+	} catch (err) {
+		console.log('lllldd');
 		ctx.body = utils.fail(err.stack);
 	}
 });

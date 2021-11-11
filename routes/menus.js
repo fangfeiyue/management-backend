@@ -14,30 +14,52 @@ router.get('/list', async (ctx) => {
 
 		const list = (await Menu.find(params)) || [];
 
-		ctx.body = util.success(getTreeMenu(list));
+		// ctx.body = util.success(getTreeMenu(list));
+		ctx.body = util.success(getTreeMenu(list, null, []));
 	} catch (err) {
 		ctx.body = util.fail(err.stack);
 	}
 });
 
-function getTreeMenu(list) {
-	return list.filter((item1) => {
-		item1._doc.children = [];
-		list.forEach((item2) => {
-			const parentIds = item2.parentId;
-			if (String(parentIds && parentIds[parentIds.length - 1]) === item1.id) {
-				item1._doc.children.push(item2);
-			}
-		});
-
-		if (item1._doc.children[0] && item1._doc.children[0].menuType == 2) {
-			// 快速判断按钮和菜单，用于后期做菜单按钮权限控制
-			item1._doc.action = item1._doc.children;
+function getTreeMenu(rootList, id, list) {
+	for (let i = 0; i < rootList.length; i++) {
+		let item = rootList[i];
+		if (String(item.parentId.slice().pop()) == String(id)) {
+			list.push(item._doc);
 		}
-
-		return item1.parentId[0] === null;
+	}
+	list.map((item) => {
+		item.children = [];
+		getTreeMenu(rootList, item._id, item.children);
+		if (item.children.length == 0) {
+			delete item.children;
+		} else if (item.children.length > 0 && item.children[0].menuType == 2) {
+			// 快速区分按钮和菜单，用于后期做菜单按钮权限控制
+			item.action = item.children;
+		}
 	});
+	return list;
 }
+
+// function getTreeMenu(list) {
+// 	return list.filter((item1) => {
+// 		item1._doc.children = [];
+// 		list.forEach((item2) => {
+// 			const parentIds = item2.parentId;
+// 			console.log(typeof parentIds && parentIds[parentIds.length - 1]);
+// 			if (String(parentIds && parentIds[parentIds.length - 1]) === item1.id) {
+// 				item1._doc.children.push(item2);
+// 			}
+// 		});
+
+// 		if (item1._doc.children[0] && item1._doc.children[0].menuType == 2) {
+// 			// 快速判断按钮和菜单，用于后期做菜单按钮权限控制
+// 			item1._doc.action = item1._doc.children;
+// 		}
+
+// 		return item1.parentId[0] === null;
+// 	});
+// }
 
 router.post('/operate', async (ctx) => {
 	const { action, _id, ...params } = ctx.request.body;

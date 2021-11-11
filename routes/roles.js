@@ -41,4 +41,28 @@ router.get('/list', async (ctx) => {
 	}
 });
 
+router.post('/operate', async (ctx) => {
+	const info = {
+		create: '创建成功',
+		edit: '编辑成功',
+		delete: '删除成功'
+	};
+	const { _id, action, roleName, remark } = ctx.request.body;
+	try {
+		if (action === 'create') {
+			await Role.create({ roleName, remark });
+		}
+		if (!_id) {
+			ctx.body = utils.fail('缺少参数：_id');
+		} else if (action === 'edit') {
+			await Role.findByIdAndUpdate(_id, { roleName, remark });
+		} else if (action === 'delete') {
+			await Role.findByIdAndRemove(_id);
+		}
+		ctx.body = utils.success(info[action]);
+	} catch (err) {
+		ctx.body = utils.fail(err.stack);
+	}
+});
+
 module.exports = router;

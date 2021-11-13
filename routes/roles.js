@@ -52,7 +52,7 @@ router.post('/operate', async (ctx) => {
 		if (action === 'create') {
 			await Role.create({ roleName, remark });
 		}
-		if (!_id) {
+		if (action !== 'create' && !_id) {
 			ctx.body = utils.fail('缺少参数：_id');
 		} else if (action === 'edit') {
 			await Role.findByIdAndUpdate(_id, { roleName, remark, updateTime: new Date() });

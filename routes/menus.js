@@ -73,6 +73,8 @@ router.post('/operate', async (ctx) => {
 		if (action === 'add') {
 			// 创建的另外一种方法，使用new，如 const menu = new Menu({...}); menu.save;
 			res = await Menu.create(params);
+		} else if (action !== 'add' && !_id) {
+			ctx.body = utils.fail('参数中请传入_id');
 		} else if (action === 'edit') {
 			params.updateTime = new Date();
 			res = await Menu.findByIdAndUpdate(_id, params);

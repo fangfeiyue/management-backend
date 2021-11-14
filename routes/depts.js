@@ -9,12 +9,28 @@ router.get('/list', async (ctx) => {
 	const params = {};
 	if (deptName) params.deptName = deptName;
 	try {
-		const list = await Dept.find(params);
+		let list = await Dept.find(params);
+		if (!deptName) {
+			list = getDeptTree(list);
+		}
 		ctx.body = utils.success(list);
 	} catch (err) {
 		ctx.body = utils.fail(err.stack);
 	}
 });
+
+function getDeptTree(list) {
+	return list.filter((item1) => {
+		item1._doc.children = [];
+		list.forEach((item2) => {
+			const parentIds = item2.parentId || [];
+			if (parentIds[parentIds.length - 1] === String(item1._id)) {
+				item1._doc.children.push(item2);
+			}
+		});
+		return item1.parentId[0] === null;
+	});
+}
 
 router.post('/operate', async (ctx) => {
 	const info = {

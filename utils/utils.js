@@ -1,3 +1,5 @@
+const jwt = require('jsonwebtoken');
+
 const CODE = {
 	SUCCESS: 200, // 成功
 	PARAM_ERROR: 10001, // 参数错误
@@ -44,6 +46,13 @@ module.exports = {
 			});
 			return item1.parentId[0] === null;
 		});
+	},
+	decode(authorization) {
+		if (authorization) {
+			const token = authorization.split(' ')[1];
+			return jwt.verify(token, 'fang');
+		}
+		return '';
 	},
 	CODE
 };

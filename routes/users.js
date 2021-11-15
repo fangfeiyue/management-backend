@@ -1,5 +1,7 @@
 const router = require('koa-router')();
 const User = require('./../models/userSchema');
+const Menu = require('./../models/menuSchema');
+const Role = require('./../models/roleSchema');
 const Counter = require('./../models/couterSchema');
 const Util = require('../utils/utils');
 var jwt = require('jsonwebtoken');
@@ -27,6 +29,8 @@ router.post('/login', async (ctx) => {
 			// );
 		}).select('userId userName userEmail state role deptId roleList');
 
+		console.log('res', res);
+
 		const data = res._doc;
 		console.log(data);
 		const token = jwt.sign(
@@ -45,7 +49,7 @@ router.post('/login', async (ctx) => {
 			ctx.body = Util.fail('账号或密码不正确');
 		}
 	} catch (err) {
-		ctx.body = Util.fail(err);
+		ctx.body = Util.fail(err.stack);
 	}
 });
 
@@ -59,7 +63,7 @@ router.get('/list', async (ctx) => {
 	if (state && state !== '0') params.state = state;
 
 	try {
-		const query = User.find(params);
+		const query = User.find(params, { _id: 0, userPwd: 0 });
 		const list = await query.skip(skipIndex).limit(page.pageSize);
 		const total = await User.countDocuments(params);
 		ctx.body = utils.success({
@@ -112,15 +116,6 @@ router.post('/operate', async (ctx) => {
 		}
 
 		if (action == 'add') {
-			const doc = await Counter.findOneAndUpdate(
-				{ _id: 'userId' },
-				{
-					$inc: { sequence_value: 1 }
-				},
-				// 设置为 true 表示返回一个新的文档
-				{ new: true }
-			);
-
 			const res = await User.findOne({ $or: [ { userName }, { userEmail } ] }, '_id userName userEmail');
 
 			if (res) {
@@ -134,6 +129,15 @@ router.post('/operate', async (ctx) => {
 				return;
 			}
 
+			const doc = await Counter.findOneAndUpdate(
+				{ _id: 'userId' },
+				{
+					$inc: { sequence_value: 1 }
+				},
+				// 设置为 true 表示返回一个新的文档
+				{ new: true }
+			);
+
 			// 新增用户方法一
 			const user = await User.create({
 				userId: doc.sequence_value,
@@ -146,7 +150,8 @@ router.post('/operate', async (ctx) => {
 				roleList,
 				userEmail,
 				// 这里暂时写死
-				userPwd: md5('123456')
+				// userPwd: md5('123456')
+				userPwd: '123456'
 			});
 
 			// 新增用户方法二
@@ -197,5 +202,43 @@ router.get('/all/list', async (ctx) => {
 		ctx.body = utils.fail(err.stack);
 	}
 });
+
+// 根据用户权限获取菜单列表
+router.get('/getPermissionList', async (ctx) => {
+	const authorization = ctx.headers.authorization;
+	const { data: { role, roleList } } = utils.decode(authorization);
+	const list = await getMenuList(role, roleList);
+	ctx.body = utils.success(list);
+});
+
+async function getMenuList(role, roleList) {
+	let list = [];
+	if (role == 0) {
+		list = (await Menu.find({})) || [];
+	} else {
+		roleList = await Role.find({ _id: { $in: roleList } });
+		let permissionList = [];
+		roleList.forEach((role) => {
+			const { checkedKeys, halfCheckedKeys } = role.permissionList;
+			permissionList = [ ...permissionList, ...checkedKeys, ...halfCheckedKeys ];
+		});
+		permissionList = [ ...new Set(permissionList) ];
+		list = await Menu.find({ _id: { $in: permissionList } });
+	}
+	return getTreeMenu(list, null, []);
+}
+
+function getTreeMenu(list) {
+	return list.filter((item1) => {
+		item1._doc.children = [];
+		list.forEach((item2) => {
+			const parentIds = item2.parentId || [];
+			if (parentIds[parentIds.length - 1] == String(item1._id)) {
+				item1._doc.children.push(item2);
+			}
+		});
+		return item1.parentId[0] === null;
+	});
+}
 
 module.exports = router;

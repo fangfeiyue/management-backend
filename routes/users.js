@@ -208,7 +208,8 @@ router.get('/getPermissionList', async (ctx) => {
 	const authorization = ctx.headers.authorization;
 	const { data: { role, roleList } } = utils.decode(authorization);
 	const list = await getMenuList(role, roleList);
-	ctx.body = utils.success(list);
+	const actionList = getActionList(list);
+	ctx.body = utils.success({ list, actionList });
 });
 
 async function getMenuList(role, roleList) {
@@ -225,20 +226,44 @@ async function getMenuList(role, roleList) {
 		permissionList = [ ...new Set(permissionList) ];
 		list = await Menu.find({ _id: { $in: permissionList } });
 	}
-	return getTreeMenu(list, null, []);
+	return getTreeMenu(list);
 }
 
 function getTreeMenu(list) {
 	return list.filter((item1) => {
 		item1._doc.children = [];
+		const children = item1._doc.children;
 		list.forEach((item2) => {
 			const parentIds = item2.parentId || [];
 			if (parentIds[parentIds.length - 1] == String(item1._id)) {
-				item1._doc.children.push(item2);
+				children.push(item2);
 			}
 		});
+		if (children.length > 0 && children[0].menuType == 2) {
+			item1._doc.action = children;
+		}
 		return item1.parentId[0] === null;
 	});
+}
+
+function getActionList(list) {
+	const actionList = [];
+	function deep(list) {
+		list.forEach((item) => {
+			const action = item._doc.action;
+			const children = item._doc.children;
+			if (children && action) {
+				action.forEach((action) => {
+					console.log(1111);
+					actionList.push(action.menuCode);
+				});
+			} else if (children && !item.action) {
+				deep(children);
+			}
+		});
+	}
+	deep(list);
+	return actionList;
 }
 
 module.exports = router;

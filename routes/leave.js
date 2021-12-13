@@ -3,20 +3,34 @@ const Utils = require('../utils/utils');
 const Leave = require('../models/leavSchema');
 const Dept = require('../models/deptSchema');
 const utils = require('../utils/utils');
-const { configure } = require('log4js');
 const leavSchema = require('../models/leavSchema');
 
 router.prefix('/leave');
 
 router.get('/list', async (ctx) => {
 	try {
-		const { applyState } = ctx.request.query;
+		const { applyState, type } = ctx.request.query;
 		const { skipIndex, page } = utils.parge(ctx.request.query);
 		const authorization = ctx.request.headers.authorization;
 		const { data } = utils.decode(authorization);
-		const params = {
-			'applyUser.userId': data.userId
-		};
+		let params = {};
+		// 审批列表
+		if (type == 'approve') {
+			// 审批状态是待审批或审批中
+			if (applyState == 1 || applyState == 2) {
+				params.curAuditUserName = data.userName;
+				params.$or = [ { applyState: 1 }, { applyState: 2 } ];
+			} else {
+				console.log('走到这个', data.userId);
+				// 其他审批状态，只要包含当前登录人即可
+				params = { 'auditFlows.userId': data.userId };
+			}
+		} else {
+			//申请休假列表 只显示当前用户的申请
+			params = {
+				'applyUser.userId': data.userId
+			};
+		}
 
 		if (applyState) params.applyState = applyState;
 
